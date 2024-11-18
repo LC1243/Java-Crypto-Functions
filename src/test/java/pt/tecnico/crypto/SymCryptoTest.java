@@ -52,6 +52,8 @@ public class SymCryptoTest {
 		System.out.println("Bytes:");
 		System.out.println(printHexBinary(plainBytes));
 
+		long startTime = System.currentTimeMillis();
+
 		// get a AES private key
 		System.out.println("Generating AES key...");
 		KeyGenerator keyGen = KeyGenerator.getInstance(SYM_ALGO);
@@ -64,12 +66,22 @@ public class SymCryptoTest {
 		Cipher cipher = Cipher.getInstance(SYM_CIPHER);
 		System.out.println(cipher.getProvider().getInfo());
 
+		long endTime = System.currentTimeMillis();
+		System.out.println("Time to generate key and IV: " + (endTime - startTime) + "ms");
+
+		startTime = System.currentTimeMillis();
+
 		// encrypt using the key and the plain text
 		System.out.println("Ciphering...");
 		cipher.init(Cipher.ENCRYPT_MODE, key, iv);
 		byte[] cipherBytes = cipher.doFinal(plainBytes);
 		System.out.print("Result: ");
 		System.out.println(printHexBinary(cipherBytes));
+
+		endTime = System.currentTimeMillis();
+		System.out.println("Time to cipher: " + (endTime - startTime) + "ms");
+
+		startTime = System.currentTimeMillis();
 
 		// decipher the cipher text using the same key
 		System.out.println("Deciphering...");
@@ -83,6 +95,9 @@ public class SymCryptoTest {
 		System.out.println(newPlainText);
 
 		assertEquals(plainText, newPlainText);
+
+		endTime = System.currentTimeMillis();
+		System.out.println("Time to decipher: " + (endTime - startTime) + "ms");
 
 		System.out.println();
 		System.out.println();

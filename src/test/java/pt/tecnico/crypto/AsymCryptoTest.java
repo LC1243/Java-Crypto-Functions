@@ -47,6 +47,8 @@ public class AsymCryptoTest {
 		System.out.println("Bytes:");
 		System.out.println(printHexBinary(plainBytes));
 
+		long startTime = System.currentTimeMillis();
+
 		// generate an RSA key pair
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance(ASYM_ALGO);
 		keyGen.initialize(ASYM_KEY_SIZE);
@@ -55,6 +57,11 @@ public class AsymCryptoTest {
 		// get an RSA cipher object
 		Cipher cipher = Cipher.getInstance(ASYM_CIPHER);
 
+		long endTime = System.currentTimeMillis();
+		System.out.println("Key generation time: " + (endTime - startTime) + " milliseconds");
+
+		startTime = System.currentTimeMillis();
+
 		System.out.println("Ciphering with public key...");
 		// encrypt the plain text using the public key
 		cipher.init(Cipher.ENCRYPT_MODE, keyPair.getPublic());
@@ -62,6 +69,11 @@ public class AsymCryptoTest {
 
 		System.out.println("Ciphered bytes:");
 		System.out.println(printHexBinary(cipherBytes));
+
+		endTime = System.currentTimeMillis();
+		System.out.println("Ciphering time: " + (endTime - startTime) + " milliseconds");
+
+		startTime = System.currentTimeMillis();
 
 		System.out.println("Deciphering  with private key...");
 		// decipher the ciphered digest using the private key
@@ -75,6 +87,9 @@ public class AsymCryptoTest {
 		System.out.println(newPlainText);
 
 		assertEquals(plainText, newPlainText);
+
+		endTime = System.currentTimeMillis();
+		System.out.println("Deciphering time: " + (endTime - startTime) + " milliseconds");
 
 		System.out.println();
 		System.out.println();
