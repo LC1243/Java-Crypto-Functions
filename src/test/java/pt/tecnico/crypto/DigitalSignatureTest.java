@@ -12,6 +12,7 @@ import java.security.SignatureException;
 import java.util.Random;
 
 import javax.crypto.Cipher;
+import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.Test;
 
@@ -47,6 +48,7 @@ public class DigitalSignatureTest {
 		System.out.print("TEST '");
 		System.out.print(SIGNATURE_ALGO);
 		System.out.println("' digital signature");
+		System.out.println("With a freshness element (timestamp)!");
 
 		System.out.println("Text:");
 		System.out.println(plainText);
@@ -80,14 +82,24 @@ public class DigitalSignatureTest {
 
 	/** Calculates digital signature from text. */
 	private static byte[] makeDigitalSignature(byte[] bytes, KeyPair keyPair) throws Exception {
+		//  appending the current timestamp to the data, ensuring a signature is unique to that moment:
+		ByteBuffer byteBuffer = ByteBuffer.allocate(bytes.length + Long.BYTES);
+		byteBuffer.put(bytes);
+		long timestamp = System.currentTimeMillis();
+		byteBuffer.putLong(timestamp);
 
 		// get a signature object and sign the plain text with the private key
 		Signature sig = Signature.getInstance(SIGNATURE_ALGO);
 		sig.initSign(keyPair.getPrivate());
-		sig.update(bytes);
+		sig.update(byteBuffer.array());
+
 		byte[] signature = sig.sign();
 
-		return signature;
+		ByteBuffer result = ByteBuffer.allocate(signature.length + Long.BYTES);
+		result.put(signature);
+		result.putLong(timestamp);
+
+		return result.array();
 	}
 
 	/**
@@ -96,16 +108,24 @@ public class DigitalSignatureTest {
 	private static boolean verifyDigitalSignature(byte[] receivedSignature, byte[] bytes, KeyPair keyPair)
 			throws Exception {
 
+		//extract the signature and the timestamp from the received data:
+		ByteBuffer byteBuffer = ByteBuffer.wrap(receivedSignature);
+		byte[] signature = new byte[receivedSignature.length - Long.BYTES];
+		byteBuffer.get(signature);
+		long timestamp = byteBuffer.getLong();
+
+		//combine the original message `bytes` and the retrieved timestamp to validate the signed content:
+		ByteBuffer dataBuffer = ByteBuffer.allocate(bytes.length + Long.BYTES);
+		dataBuffer.put(bytes);
+		dataBuffer.putLong(timestamp);
+		byte[] dataToVerify = dataBuffer.array();
+
 		// verify the signature with the public key
 		Signature sig = Signature.getInstance(SIGNATURE_ALGO);
 		sig.initVerify(keyPair.getPublic());
-		sig.update(bytes);
-		try {
-			return sig.verify(receivedSignature);
-		} catch (SignatureException se) {
-			System.err.println("Caught exception while verifying " + se);
-			return false;
-		}
+		sig.update(dataToVerify);
+
+		return sig.verify(signature) && (System.currentTimeMillis() - timestamp <= 5000);
 	}
 
 	/**
