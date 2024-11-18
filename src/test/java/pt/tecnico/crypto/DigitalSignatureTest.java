@@ -9,6 +9,7 @@ import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.util.Random;
 
 import javax.crypto.Cipher;
 
@@ -133,11 +134,15 @@ public class DigitalSignatureTest {
 		System.out.println("Signing...");
 		byte[] cipherDigest = digestAndCipher(plainBytes, key);
 
+		Random random = new Random();
+		int index = random.nextInt(plainBytes.length);
+		plainBytes[index] = (byte) random.nextInt(256);
+
 		// verify the signature
 		System.out.println("Verifying...");
 		boolean result = redigestDecipherCompare(cipherDigest, plainBytes, key);
 		System.out.println("Signature is " + (result ? "right" : "wrong"));
-		assertTrue(result);
+		assertFalse(result);
 
 	}
 
